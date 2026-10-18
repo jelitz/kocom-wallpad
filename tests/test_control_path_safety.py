@@ -94,7 +94,7 @@ def _install_homeassistant_shims() -> None:
     _set_attributes(components, light=light)
     for package, attr, value in (
         ("sensor", "SensorDeviceClass", types.SimpleNamespace(TEMPERATURE="temperature", CO2="co2", PM10="pm10", PM25="pm25", VOLATILE_ORGANIC_COMPOUNDS="volatile_organic_compounds", HUMIDITY="humidity")),
-        ("binary_sensor", "BinarySensorDeviceClass", types.SimpleNamespace(PROBLEM="problem", MOTION="motion", DOOR="door")),
+        ("binary_sensor", "BinarySensorDeviceClass", types.SimpleNamespace(PROBLEM="problem", MOTION="motion", OCCUPANCY="occupancy")),
         ("switch", "SwitchDeviceClass", types.SimpleNamespace(OUTLET="outlet")),
     ):
         module = _module(f"homeassistant.components.{package}")
@@ -529,7 +529,7 @@ class ProtocolFixtureTests(unittest.TestCase):
             self.assertEqual(1, len(states))
             self.assert_device(states[0], DeviceType.MOTION, 0, SubType.NONE, Platform.BINARY_SENSOR)
             self.assertIs(expected, states[0].state)
-            self.assertEqual({"device_class": "door"}, states[0].attribute)
+            self.assertEqual({"device_class": "occupancy"}, states[0].attribute)
 
     def test_consecutive_airquality_reports_and_zero_suppression(self):
         first = self.report("airquality_status")
@@ -898,16 +898,16 @@ class GatewaySafetyTests(unittest.IsolatedAsyncioTestCase):
         self.gateway.on_device_state(state)
         self.assertTrue(self.gateway.is_device_available(state.key))
 
-    async def test_light_elevator_and_door_are_available_while_transport_is_up(self):
+    async def test_light_elevator_and_arrival_are_available_while_transport_is_up(self):
         light = self._state(True).key
         elevator = DeviceKey(DeviceType.ELEVATOR, 0, 0, SubType.NONE)
-        door = DeviceKey(DeviceType.MOTION, 0, 0, SubType.NONE)
-        for key in (light, elevator, door):
+        arrival = DeviceKey(DeviceType.MOTION, 0, 0, SubType.NONE)
+        for key in (light, elevator, arrival):
             self.assertFalse(self.gateway.is_device_state_confirmed(key))
             self.assertTrue(self.gateway.is_device_available(key))
 
         self.connection.connected = False
-        for key in (light, elevator, door):
+        for key in (light, elevator, arrival):
             self.assertFalse(self.gateway.is_device_available(key))
 
     async def test_live_packet_confirms_only_its_device_key(self):

@@ -494,10 +494,11 @@ class KocomController:
                 device_index=0,
                 sub_type=SubType.NONE,
             )
-            # patched: 0x60 is the front door open sensor; it reports 04 01 when the door
-            # opens and 04 00 about a second later, so "on" is a short pulse per opening
+            # patched: on KHN-V100JA 0x60 fires only when the front door opens and the
+            # living room presence sensor then sees motion (arrival). It reports 04 01
+            # and 04 00 about two seconds later, so "on" is a short pulse per arrival
             attribute = {
-                "device_class": BinarySensorDeviceClass.DOOR
+                "device_class": BinarySensorDeviceClass.OCCUPANCY
             }
             state = frame.command == 0x04 and frame.payload[0] != 0x00
             dev = DeviceState(key=key, platform=Platform.BINARY_SENSOR, attribute=attribute, state=state)

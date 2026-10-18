@@ -879,6 +879,13 @@ class GatewaySafetyTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(self.gateway.is_device_available(state.key))
         self.assertTrue(self.gateway.is_device_state_confirmed(state.key))
 
+    async def test_arrival_pulse_is_restored_as_off(self):
+        key = DeviceKey(DeviceType.MOTION, 0, 0, SubType.NONE)
+        self.gateway._restore_mode = True
+        self.gateway.on_device_state(DeviceState(key, Platform.BINARY_SENSOR, {}, True))
+        self.gateway._restore_mode = False
+        self.assertIs(False, self.gateway.registry.get(key).state)
+
     async def test_reconnect_requires_a_new_live_packet(self):
         state = self._thermostat_state(1)
         self.gateway._sync_connection_availability()

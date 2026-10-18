@@ -229,6 +229,8 @@ class KocomGateway:
 
     def on_device_state(self, dev: DeviceState) -> None:  
         is_live = not self._restore_mode and self.conn._is_connected()
+        if self._restore_mode and dev.key.device_type == DeviceType.MOTION:  # patched: arrival is a short pulse, never restore it as on
+            dev.state = False
         availability_changed = False
         if is_live and dev.key.key not in self._live_device_keys:
             self._live_device_keys.add(dev.key.key)

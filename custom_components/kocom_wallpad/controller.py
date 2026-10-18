@@ -611,6 +611,8 @@ class KocomController:
 
     def build_expectation(self, key: DeviceKey, action: str, **kwargs: Any) -> tuple[Predicate, float]:
         dt = key.device_type
+        if action == "status_query":  # patched: status queries are sent without confirmation
+            return self._match_key_and(key, lambda _d: False), CMD_CONFIRM_TIMEOUT
         if dt in (DeviceType.LIGHT, DeviceType.LIGHTCUTOFF, DeviceType.OUTLET, DeviceType.ELEVATOR):
             return self._expect_for_switch_like(key, action, **kwargs)
         if dt == DeviceType.VENTILATION:
@@ -640,10 +642,12 @@ class KocomController:
         data = bytearray(8)
 
         if action == "status_query":
-            if device_type != DeviceType.THERMOSTAT:
-                raise ValueError("Status query is supported only for thermostats")
+            if device_type not in (  # patched: lights, ventilation and gas valve answer 0x3A too
+                DeviceType.THERMOSTAT, DeviceType.LIGHT, DeviceType.VENTILATION, DeviceType.GASVALVE
+            ):
+                raise ValueError("Status query is not supported for this device type")
             if not 0x00 <= room_index <= 0xFE:
-                raise ValueError("Status query requires a physical thermostat room")
+                raise ValueError("Status query requires a physical room")
             command = bytes([0x3A])
         elif device_type in (DeviceType.LIGHT, DeviceType.OUTLET):
             if device_type == DeviceType.LIGHT and room_index == 0xFF:

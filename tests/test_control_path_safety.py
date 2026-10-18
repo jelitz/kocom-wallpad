@@ -323,13 +323,27 @@ class ControllerSafetyTests(unittest.TestCase):
             living_packet,
         )
 
+    def test_status_query_for_light_ventilation_and_gasvalve_rooms(self):
+        controller = KocomController(_ControllerGateway())
+        for device_type, code in (
+            (DeviceType.LIGHT, 0x0E),
+            (DeviceType.VENTILATION, 0x48),
+            (DeviceType.GASVALVE, 0x2C),
+        ):
+            with self.subTest(device_type=device_type):
+                packet, _, _ = controller.generate_command(
+                    DeviceKey(device_type, 1, 0, SubType.NONE), "status_query"
+                )
+                self.assertEqual((code, 0x01, 0x3A), (packet[5], packet[6], packet[9]))
+                self.assertEqual(sum(packet[2:18]) % 256, packet[18])
+
     def test_status_query_and_unknown_thermostat_actions_are_rejected(self):
         controller = KocomController(_ControllerGateway())
         thermostat = DeviceKey(DeviceType.THERMOSTAT, 1, 0, SubType.NONE)
-        light = DeviceKey(DeviceType.LIGHT, 1, 0, SubType.NONE)
+        outlet = DeviceKey(DeviceType.OUTLET, 1, 0, SubType.NONE)
 
         with self.assertRaises(ValueError):
-            controller.generate_command(light, "status_query")
+            controller.generate_command(outlet, "status_query")
         with self.assertRaises(ValueError):
             controller.generate_command(thermostat, "unsupported")
         with self.assertRaises(ValueError):
@@ -355,7 +369,7 @@ class ControllerSafetyTests(unittest.TestCase):
         controller = KocomController(_ControllerGateway())
         key = DeviceKey(DeviceType.GASVALVE, 1, 0, SubType.NONE)
 
-        for action in ("turn_on", "set_temperature", "status_query"):
+        for action in ("turn_on", "set_temperature"):
             with self.subTest(action=action), self.assertRaises(ValueError):
                 controller.generate_command(key, action)
 

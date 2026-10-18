@@ -309,6 +309,20 @@ class KocomGateway:
                 and 0x00 <= key.room_index <= 0xFE
             ):
                 keys_by_identity[key.key] = key
+        for dev in self.registry.all_by_platform(Platform.LIGHT):  # patched: query each light room once
+            key = dev.key
+            if key.device_type == DeviceType.LIGHT and 0x00 <= key.room_index <= 0xFE:
+                room_key = DeviceKey(DeviceType.LIGHT, key.room_index, 0, SubType.NONE)
+                keys_by_identity[room_key.key] = room_key
+        for platform, dtype in (  # patched: query ventilation and gas valve once
+            (Platform.FAN, DeviceType.VENTILATION),
+            (Platform.SWITCH, DeviceType.GASVALVE),
+        ):
+            for dev in self.registry.all_by_platform(platform):
+                key = dev.key
+                if key.device_type == dtype and key.sub_type == SubType.NONE and 0x00 <= key.room_index <= 0xFE:
+                    dev_key = DeviceKey(dtype, key.room_index, 0, SubType.NONE)
+                    keys_by_identity[dev_key.key] = dev_key
         keys = [keys_by_identity[identity] for identity in sorted(keys_by_identity)]
         if keys:
             self._bootstrap_scheduled_generation = generation

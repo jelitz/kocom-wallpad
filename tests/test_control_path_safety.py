@@ -898,16 +898,17 @@ class GatewaySafetyTests(unittest.IsolatedAsyncioTestCase):
         self.gateway.on_device_state(state)
         self.assertTrue(self.gateway.is_device_available(state.key))
 
-    async def test_light_and_elevator_are_available_while_transport_is_up(self):
+    async def test_light_elevator_and_door_are_available_while_transport_is_up(self):
         light = self._state(True).key
         elevator = DeviceKey(DeviceType.ELEVATOR, 0, 0, SubType.NONE)
-        for key in (light, elevator):
+        door = DeviceKey(DeviceType.MOTION, 0, 0, SubType.NONE)
+        for key in (light, elevator, door):
             self.assertFalse(self.gateway.is_device_state_confirmed(key))
             self.assertTrue(self.gateway.is_device_available(key))
 
         self.connection.connected = False
-        self.assertFalse(self.gateway.is_device_available(light))
-        self.assertFalse(self.gateway.is_device_available(elevator))
+        for key in (light, elevator, door):
+            self.assertFalse(self.gateway.is_device_available(key))
 
     async def test_live_packet_confirms_only_its_device_key(self):
         first = self._state(True)

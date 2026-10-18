@@ -3,23 +3,38 @@
 # Kocom Wallpad Integration for Home Assistant
 Home Assistant를 위한 Kocom Wallpad 통합구성요소
 
-이 유지보수 포크는 [lunDreame의 원본 통합구성요소](https://github.com/lunDreame/kocom-wallpad)를 기반으로 합니다.
-원저작권과 Apache 라이선스는 그대로 유지됩니다.
+이 레포는 [ninthsword/kocom-wallpad](https://github.com/ninthsword/kocom-wallpad)를 포크해서 코콤 KHN-V100JA 월패드 + EW11 환경에서 겪은 문제를 고친 버전입니다.
+ninthsword 레포는 [lunDreame의 원본 통합구성요소](https://github.com/lunDreame/kocom-wallpad)를 기반으로 합니다. 원저작권 표기와 LICENSE 파일(MIT)은 그대로 둡니다.
+
+## 이 포크에서 바꾼 것
+
+| 문제 | 바꾼 내용 |
+|---|---|
+| 조명 상태 값이 0xFF가 아니면 꺼짐으로 보임 | 0이 아니면 켜짐으로 판단 |
+| 일괄소등(0EFF)이 일반 조명처럼 조작됨 | 일괄소등 상태를 따로 두고 읽기 전용으로 표시 |
+| 조명 명령 재시도 때문에 켜짐·꺼짐이 반복됨 | 조명 명령은 재시도 없이 한 번만 보냄 |
+| KHN-V100JA는 조명을 켜고 끈 뒤 일괄소등 해제 패킷을 기다림 | 조명 명령 1초 뒤 해제 패킷(0EFF 66)을 보냄. 일괄소등이 켜져 있으면 보내지 않음 |
+| HA 재시작 직후 조명·엘리베이터 호출이 사용 불가로 표시됨 | EW11 연결만 살아 있으면 사용 가능으로 표시 |
+| 재시작 뒤 조명·환기·가스 상태를 모름 | 연결할 때 조명 방·환기·가스밸브에 상태 조회(0x3A)를 보냄 |
+| 환기 CO2 값이 몇 시간씩 갱신되지 않음 | 환기 상태를 5분마다 다시 조회 |
+| 환기 프리셋 이름이 영어로 보임 | 한국어 번역 추가 |
+
+모두 KHN-V100JA 한 대에서만 확인했습니다. 다른 월패드에서는 동작이 다를 수 있습니다.
 
 Home Assistant 2026.8.0 이상이 필요하며, 이는 테스트된 개발 기준과 일치합니다.
 이전 버전의 Home Assistant는 이번 릴리스에서 더 이상 지원하지 않으므로,
 설치 전에 Home Assistant를 먼저 업그레이드해 주세요.
 
 ## 기여
-문제가 있나요? [Issues](https://github.com/ninthsword/kocom-wallpad/issues) 탭에 작성해 주세요.
+문제가 있나요? [Issues](https://github.com/jelitz/kocom-wallpad/issues) 탭에 작성해 주세요.
 
-- 더 좋은 아이디어가 있나요? [Pull requests](https://github.com/ninthsword/kocom-wallpad/pulls)로 공유해 주세요!
+- 더 좋은 아이디어가 있나요? [Pull requests](https://github.com/jelitz/kocom-wallpad/pulls)로 공유해 주세요!
 - 이 통합을 사용하면서 발생하는 문제에 대해서는 책임지지 않습니다.
 
 도움이 되셨나요? [카카오페이](https://qr.kakaopay.com/FWDWOBBmR) [토스](https://toss.me/lundreamer)
 
 ## 설치
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ninthsword&repository=kocom-wallpad&category=Integration)
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jelitz&repository=kocom-wallpad&category=Integration)
 
 이 통합을 설치하려면 이 GitHub Repo를 HACS Custom Repositories에 추가하거나 위의 배지를 클릭하세요. 설치 후 HomeAssistant를 재부팅하세요.
 
@@ -52,13 +67,13 @@ Home Assistant 2026.8.0 이상이 필요하며, 이는 테스트된 개발 기�
 
 - **초기 장치 추가 시에는 최초 한번은 장치를 ON/OFF 하셔야 합니다.**
 - 엘리베이터의 경우 현관 스위치가 있는 경우 현관 스위치에서 호출하셔야 정상적으로 등록됩니다.
-- 기기 지원 및 기타 요청 사항은 [유지보수 이슈 트래커](https://github.com/ninthsword/kocom-wallpad/issues)를 이용해 주세요.
+- 기기 지원 및 기타 요청 사항은 [유지보수 이슈 트래커](https://github.com/jelitz/kocom-wallpad/issues)를 이용해 주세요.
 
 ## 디버깅
 - 문제 파악을 위해 아래 코드를 `configuration.yaml` 파일에 추가 후 HomeAssistant를 재시작해 주세요.
 - 디버깅 외에는 활성화하지 마세요.
 
-디버깅 관련 문제는 [유지보수 이슈 트래커](https://github.com/ninthsword/kocom-wallpad/issues)를 통해 제보해 주세요.
+디버깅 관련 문제는 [유지보수 이슈 트래커](https://github.com/jelitz/kocom-wallpad/issues)를 통해 제보해 주세요.
 
 ```yaml
 logger:

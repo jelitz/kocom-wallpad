@@ -55,7 +55,19 @@
         },
         "fan": {
             "ventilation": {
-                "name": "환기 {id}"
+                "name": "환기 {id}",
+                "state_attributes": {
+                    "preset_mode": {
+                        "state": {
+                            "auto": "자동",
+                            "ventilation": "환기",
+                            "sleep": "수면",
+                            "bypass": "바이패스",
+                            "air purification": "공기청정",
+                            "unknown": "알 수 없음"
+                        }
+                    }
+                }
             }
         },
         "sensor": {
@@ -63,7 +75,7 @@
                 "name": "엘리베이터 방향 {id}"
             },
             "elevator-floor": {
-                "name":"엘리베이터 층수 {id}"
+                "name": "엘리베이터 층수 {id}"
             },
             "airquality-co2": {
                 "name": "공기질 CO2 {id}"

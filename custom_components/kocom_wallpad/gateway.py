@@ -255,6 +255,8 @@ class KocomGateway:
 
     def is_device_available(self, key: DeviceKey) -> bool:
         """A restored state is display-only until a live packet confirms it."""
+        if key.device_type in (DeviceType.LIGHT, DeviceType.ELEVATOR) and self.is_transport_available():  # patched: lights and elevator call usable before first live report
+            return True
         return self.is_transport_available() and self.is_device_state_confirmed(key)
 
     def is_transport_available(self) -> bool:

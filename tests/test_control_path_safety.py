@@ -853,7 +853,7 @@ class GatewaySafetyTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual([], self.gateway._pendings)
 
     async def test_restored_state_is_commandable_but_unconfirmed_until_live_packet(self):
-        state = self._state(True)
+        state = self._thermostat_state(1)
         self.gateway._restore_mode = True
         self.gateway.on_device_state(state)
         self.gateway._restore_mode = False
@@ -865,7 +865,7 @@ class GatewaySafetyTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(self.gateway.is_device_state_confirmed(state.key))
 
     async def test_reconnect_requires_a_new_live_packet(self):
-        state = self._state(True)
+        state = self._thermostat_state(1)
         self.gateway._sync_connection_availability()
         self.gateway.on_device_state(state)
         self.assertTrue(self.gateway.is_device_available(state.key))
@@ -882,6 +882,17 @@ class GatewaySafetyTests(unittest.IsolatedAsyncioTestCase):
 
         self.gateway.on_device_state(state)
         self.assertTrue(self.gateway.is_device_available(state.key))
+
+    async def test_light_and_elevator_are_available_while_transport_is_up(self):
+        light = self._state(True).key
+        elevator = DeviceKey(DeviceType.ELEVATOR, 0, 0, SubType.NONE)
+        for key in (light, elevator):
+            self.assertFalse(self.gateway.is_device_state_confirmed(key))
+            self.assertTrue(self.gateway.is_device_available(key))
+
+        self.connection.connected = False
+        self.assertFalse(self.gateway.is_device_available(light))
+        self.assertFalse(self.gateway.is_device_available(elevator))
 
     async def test_live_packet_confirms_only_its_device_key(self):
         first = self._state(True)

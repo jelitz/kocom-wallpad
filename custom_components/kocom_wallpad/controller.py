@@ -494,10 +494,12 @@ class KocomController:
                 device_index=0,
                 sub_type=SubType.NONE,
             )
+            # patched: 0x60 is the front door open sensor; it reports 04 01 when the door
+            # opens and 04 00 about a second later, so "on" is a short pulse per opening
             attribute = {
-                "device_class": BinarySensorDeviceClass.MOTION
+                "device_class": BinarySensorDeviceClass.DOOR
             }
-            state = frame.command == 0x04
+            state = frame.command == 0x04 and frame.payload[0] != 0x00
             dev = DeviceState(key=key, platform=Platform.BINARY_SENSOR, attribute=attribute, state=state)
             return dev
         

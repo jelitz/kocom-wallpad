@@ -95,7 +95,7 @@
         },
         "binary_sensor": {
             "motion": {
-                "name": "Motion Sensor(door) {id}"
+                "name": "Front Door Open {id}"
             },
             "thermostat-errcode": {
                 "name": "Boiler Error Code {id}"

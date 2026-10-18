@@ -94,7 +94,7 @@ def _install_homeassistant_shims() -> None:
     _set_attributes(components, light=light)
     for package, attr, value in (
         ("sensor", "SensorDeviceClass", types.SimpleNamespace(TEMPERATURE="temperature", CO2="co2", PM10="pm10", PM25="pm25", VOLATILE_ORGANIC_COMPOUNDS="volatile_organic_compounds", HUMIDITY="humidity")),
-        ("binary_sensor", "BinarySensorDeviceClass", types.SimpleNamespace(PROBLEM="problem", MOTION="motion")),
+        ("binary_sensor", "BinarySensorDeviceClass", types.SimpleNamespace(PROBLEM="problem", MOTION="motion", DOOR="door")),
         ("switch", "SwitchDeviceClass", types.SimpleNamespace(OUTLET="outlet")),
     ):
         module = _module(f"homeassistant.components.{package}")
@@ -440,7 +440,8 @@ _REPORTS = {
     "vent_off": "aa5530bc00010048000000010000060000003c0d0d",
     "elevator_down": "aa5530bc0001004400000182000000000000b40d0d",
     "elevator_arrival": "aa5530bc0001004400000331320000000000970d0d",
-    "motion_on": "aa5530bc0001006000040000000000000000510d0d",
+    "motion_on": "aa5530bc0001006000040100000000000000520d0d",
+    "motion_clear": "aa5530bc0001006000040000000000000000510d0d",
     "motion_off": "aa5530bc00010060000000000000000000004d0d0d",
     "airquality_status": "aa5530bc00010098010023110258012c19328c0d0d",
     "airquality_query": "aa5530bc00010098013a050003200000001e060d0d",
@@ -523,12 +524,12 @@ class ProtocolFixtureTests(unittest.TestCase):
                 self.assertEqual({}, state.attribute)
 
     def test_consecutive_motion_reports(self):
-        for name, expected in (("motion_on", True), ("motion_off", False)):
+        for name, expected in (("motion_on", True), ("motion_clear", False), ("motion_off", False)):
             states = self.report(name)
             self.assertEqual(1, len(states))
             self.assert_device(states[0], DeviceType.MOTION, 0, SubType.NONE, Platform.BINARY_SENSOR)
             self.assertIs(expected, states[0].state)
-            self.assertEqual({"device_class": "motion"}, states[0].attribute)
+            self.assertEqual({"device_class": "door"}, states[0].attribute)
 
     def test_consecutive_airquality_reports_and_zero_suppression(self):
         first = self.report("airquality_status")

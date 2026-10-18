@@ -107,7 +107,7 @@
         },
         "binary_sensor": {
             "motion": {
-                "name": "움직임 감지기(현관) {id}"
+                "name": "현관문 열림 {id}"
             },
             "thermostat-errcode": {
                 "name": "보일러 오류코드 {id}"

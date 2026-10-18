@@ -604,6 +604,19 @@ class KocomGateway:
                                     _max_tries,
                                 )
 
+                    if success and int(item.key.device_type) == 1 and item.key.room_index != 0xFF:  # patched: kocom cutoff guard
+                        try:
+                            _ck = DeviceKey(device_type=DeviceType.LIGHT, room_index=0xFF, device_index=0, sub_type=SubType.NONE)
+                            _cst = self.registry.get(_ck)
+                            if not (_cst and _cst.state is True):
+                                await asyncio.sleep(1.0)
+                                _body = bytes([0x30, 0x9C, 0x00, 0x0E, 0xFF, 0x01, 0x00, 0x66]) + bytes([0xFF] * 8)
+                                _pkt = bytes([0xAA, 0x55]) + _body + bytes([sum(_body) & 0xFF]) + bytes([0x0D, 0x0D])
+                                await self.conn.send(_pkt)
+                                LOGGER.debug("patched: sent cutoff release %s", _pkt.hex())
+                        except Exception as _err:  # noqa: BLE001
+                            LOGGER.warning("patched: cutoff release failed: %s", _err)
+
                     if not item.future.done():
                         item.future.set_result(success)
                 except asyncio.CancelledError:

@@ -828,10 +828,16 @@ class GatewaySafetyTests(unittest.IsolatedAsyncioTestCase):
     async def test_waiter_is_registered_before_same_turn_reply(self):
         self.connection.on_send = lambda _packet: self.gateway.on_device_state(self._state(True))
         self.gateway._task_sender = asyncio.create_task(self.gateway._sender_loop())
+        # A confirmed light command is followed by the all-lights-off release
+        # frame about one second later, before the action resolves.
         self.assertTrue(await asyncio.wait_for(
-            self.gateway.async_send_action(self._state().key, "turn_on"), timeout=0.2
+            self.gateway.async_send_action(self._state().key, "turn_on"), timeout=2.0
         ))
         self.assertEqual([], self.gateway._pendings)
+        self.assertEqual(
+            bytes.fromhex("aa55309c000eff010066ffffffffffffffff380d0d"),
+            self.connection.sent[-1],
+        )
 
     async def test_timeout_cleans_waiter_and_returns_failure(self):
         self.gateway.controller.generate_command = lambda *_args, **_kwargs: (b"x", lambda _dev: False, 0.001)

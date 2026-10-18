@@ -543,7 +543,8 @@ class KocomGateway:
                         continue
 
                     success = False
-                    for attempt in range(1, SEND_RETRY_MAX + 1):
+                    _max_tries = 1 if int(item.key.device_type) == 1 else SEND_RETRY_MAX  # patched: no light retries
+                    for attempt in range(1, _max_tries + 1):
                         LOGGER.debug("TX idle wait (max 1.0s) before '%s'...", item.action)
                         t0 = asyncio.get_running_loop().time()
                         while not self.is_idle():
@@ -569,7 +570,7 @@ class KocomGateway:
                             if waiter in self._pendings:
                                 self._pendings.remove(waiter)
                             LOGGER.warning("Send failed on attempt %d: %s", attempt, err)
-                            if attempt < SEND_RETRY_MAX:
+                            if attempt < _max_tries:
                                 await asyncio.sleep(SEND_RETRY_GAP)
                                 continue
                             break
@@ -586,13 +587,13 @@ class KocomGateway:
                             success = True
                             break
                         except asyncio.TimeoutError:
-                            if attempt < SEND_RETRY_MAX:
+                            if attempt < _max_tries:
                                 LOGGER.warning(
                                     "No confirmation for '%s' (attempt %d/%d). "
                                     "Retrying in %.2fs...",
                                     item.action,
                                     attempt,
-                                    SEND_RETRY_MAX,
+                                    _max_tries,
                                     SEND_RETRY_GAP,
                                 )
                                 await asyncio.sleep(SEND_RETRY_GAP)
@@ -600,7 +601,7 @@ class KocomGateway:
                                 LOGGER.error(
                                     "Command '%s' failed after %d attempts.",
                                     item.action,
-                                    SEND_RETRY_MAX,
+                                    _max_tries,
                                 )
 
                     if not item.future.done():

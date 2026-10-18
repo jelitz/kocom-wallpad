@@ -214,7 +214,7 @@ class KocomController:
                 attribute = {}
                 if platform == Platform.SWITCH:
                     attribute = {"device_class": SwitchDeviceClass.OUTLET}
-                state = frame.payload[idx] == 0xFF        
+                state = frame.payload[idx] != 0x00  # patched: 0x05 also means ON        
                 dev = DeviceState(key=key, platform=platform, attribute=attribute, state=state)
                 if state:
                     dev._is_register = True

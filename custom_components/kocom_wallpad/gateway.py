@@ -29,6 +29,8 @@ from .controller import KocomController
 from .models import DeviceKey, DeviceState
 from .transport import AsyncConnection
 
+VENT_POLL_SEC = 300  # patched: ventilation status (CO2) re-query interval
+
 
 @dataclass(slots=True)
 class _CmdItem:
@@ -131,6 +133,7 @@ class KocomGateway:
         self._task_sender: asyncio.Task | None = None
         self._task_bootstrap_queries: asyncio.Task | None = None
         self._bootstrap_query_tasks: set[asyncio.Task] = set()
+        self._task_vent_poll: asyncio.Task | None = None
         self._pendings: list[_PendingWaiter] = []
         self._last_rx_monotonic: float = 0.0
         self._last_tx_monotonic: float = 0.0
@@ -150,6 +153,7 @@ class KocomGateway:
         self._last_tx_monotonic = self.conn.idle_since()
         self._task_reader = asyncio.create_task(self._read_loop())
         self._task_sender = asyncio.create_task(self._sender_loop())
+        self._task_vent_poll = asyncio.create_task(self._vent_poll_loop())
         self._sync_connection_availability()
 
     async def async_stop(self, event: Event | None = None) -> None:
@@ -158,6 +162,10 @@ class KocomGateway:
             self._task_reader.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self._task_reader
+        if self._task_vent_poll:
+            self._task_vent_poll.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._task_vent_poll
         await self._cancel_bootstrap_queries()
         if self._task_sender:
             self._task_sender.cancel()
@@ -350,6 +358,21 @@ class KocomGateway:
         finally:
             if self._task_bootstrap_queries is asyncio.current_task():
                 self._task_bootstrap_queries = None
+
+    async def _vent_poll_loop(self) -> None:
+        """patched: re-query ventilation every 5 min so its CO2 value stays fresh."""
+        while True:
+            await asyncio.sleep(VENT_POLL_SEC)
+            if not self.conn._is_connected():
+                continue
+            generation = self._connection_generation
+            for dev in self.registry.all_by_platform(Platform.FAN):
+                key = dev.key
+                if key.device_type == DeviceType.VENTILATION and key.sub_type == SubType.NONE:
+                    await self._async_send_status_query(
+                        DeviceKey(DeviceType.VENTILATION, key.room_index, 0, SubType.NONE),
+                        generation,
+                    )
 
     def _cancel_bootstrap_queries_soon(self) -> None:
         task = self._task_bootstrap_queries

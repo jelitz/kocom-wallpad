@@ -192,7 +192,7 @@ class KocomController:
         if frame.command in (0x65, 0x66):
             key = DeviceKey(
                 device_type=frame.dev_type,
-                room_index=0,
+                room_index=0xFF,  # patched: keep cutoff separate from light 0-0
                 device_index=0,
                 sub_type=SubType.NONE,
             )
@@ -646,6 +646,8 @@ class KocomController:
                 raise ValueError("Status query requires a physical thermostat room")
             command = bytes([0x3A])
         elif device_type in (DeviceType.LIGHT, DeviceType.OUTLET):
+            if device_type == DeviceType.LIGHT and room_index == 0xFF:
+                raise ValueError("patched: cutoff control disabled (read-only)")
             data = self._generate_switch(key, action, data)
         elif device_type == DeviceType.VENTILATION:
             data = self._generate_ventilation(action, data, **kwargs)
